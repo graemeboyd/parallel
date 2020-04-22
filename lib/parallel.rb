@@ -456,7 +456,7 @@ module Parallel
           process_incoming_jobs(child_read, child_write, job_factory, options, &block)
 
           profile = RubyProf.stop
-          print_profile(profile, self.worker_number)
+          print_profile(profile, "#{self.worker_number}_#{Time.now.to_i}")
         ensure
           child_read.close
           child_write.close
