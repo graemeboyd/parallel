@@ -530,7 +530,7 @@ module Parallel
     end
 
     def print_profile(profile, index)
-      printer = RubyProf::GraphHtmlPrinter.new(profile)
+      printer = RubyProf::CallStackPrinter.new(profile)
       outfile = File.join('profile', "job_#{index}.html")
       FileUtils.mkdir_p(File.dirname(outfile))
       File.open(outfile, 'w') do |f|
