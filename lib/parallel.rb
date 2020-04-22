@@ -1,6 +1,7 @@
 require 'rbconfig'
 require 'parallel/version'
 require 'parallel/processor_count'
+require 'ruby-prof'
 
 module Parallel
   extend Parallel::ProcessorCount
@@ -503,12 +504,20 @@ module Parallel
     def call_with_index(item, index, options, &block)
       args = [item]
       args << index if options[:with_index]
+      output = nil # avoid GC overhead of passing large results around
+
+      RubyProf.start
+
       if options[:return_results]
-        block.call(*args)
+        output = block.call(*args)
       else
         block.call(*args)
-        nil # avoid GC overhead of passing large results around
       end
+
+      profile = RubyProf.stop
+      print_profile(profile, index)
+
+      output
     end
 
     def with_instrumentation(item, index, options)
@@ -518,6 +527,15 @@ module Parallel
       result = yield
       options[:mutex].synchronize { on_finish.call(item, index, result) } if on_finish
       result unless options[:preserve_results] == false
+    end
+
+    def print_profile(profile, index)
+      printer = RubyProf::GraphHtmlPrinter.new(profile)
+      outfile = File.join('profile', "job_#{index}.html")
+      FileUtils.mkdir_p(File.dirname(outfile))
+      File.open(outfile, 'w') do |f|
+        printer.print(f)
+      end
     end
   end
 end
