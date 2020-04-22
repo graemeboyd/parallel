@@ -451,7 +451,12 @@ module Parallel
           parent_write.close
           parent_read.close
 
+          RubyProf.start
+
           process_incoming_jobs(child_read, child_write, job_factory, options, &block)
+
+          profile = RubyProf.stop
+          print_profile(profile, self.worker_number)
         ensure
           child_read.close
           child_write.close
@@ -506,16 +511,11 @@ module Parallel
       args << index if options[:with_index]
       output = nil # avoid GC overhead of passing large results around
 
-      RubyProf.start
-
       if options[:return_results]
         output = block.call(*args)
       else
         block.call(*args)
       end
-
-      profile = RubyProf.stop
-      print_profile(profile, index)
 
       output
     end
